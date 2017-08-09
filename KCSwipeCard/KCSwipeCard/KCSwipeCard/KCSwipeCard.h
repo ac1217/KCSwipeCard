@@ -33,7 +33,27 @@ typedef enum : NSUInteger {
 
 @protocol KCSwipeCardDelegate <NSObject>
 
+// 滑过一张
+- (void)swipeCard:(KCSwipeCard *)swipeCard didSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction;
 
+// 是否允许结束滑动
+- (BOOL)swipeCard:(KCSwipeCard *)swipeCard shouldSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction;
+
+// 取消滑动
+- (void)swipeCard:(KCSwipeCard *)swipeCard didCancelSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction;
+
+// 松开手
+- (void)swipeCard:(KCSwipeCard *)swipeCard didEndSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction;
+
+// 将要滑动
+- (void)swipeCard:(KCSwipeCard *)swipeCard willBeginSwipeItemAtIndex:(NSInteger)index;
+
+
+// 是否允许开始滑动
+- (BOOL)swipeCard:(KCSwipeCard *)swipeCard shouldBeginSwipeItemAtIndex:(NSInteger)index;
+
+// 动画执行完毕
+- (void)swipeCard:(KCSwipeCard *)swipeCard didEndSwipeDeceleratingCell:(KCSwipeCardCell *)cell inDirection:(KCSwipeCardSwipeDirection)direction;
 
 @end
 
@@ -50,9 +70,13 @@ typedef enum : NSUInteger {
 @property (nonatomic,assign) KCSwipeCardSwipeDirection swipeDirection;
 @property (nonatomic,assign) NSTimeInterval animationDuration;
 
-@property (nonatomic,assign, getter=isSwiping) BOOL swiping;
-
 - (__kindof KCSwipeCardCell *)dequeueReusableCellWithIdentifier:(NSString *)identifier;
 - (void)reloadData;
+
+//- (KCSwipeCardCell *)cellForItemAtIndex:(NSInteger)index;
+
+
+@property (nonatomic,assign, readonly) CGPoint swipeLocation;
+@property (nonatomic,assign, readonly) CGPoint swipeTranslation;
 
 @end
