@@ -13,18 +13,44 @@
     CGPoint _swipeTranslation;
 }
 
-@property (nonatomic,strong) NSMutableSet *usageCells;
 @property (nonatomic,strong) NSMutableDictionary *reusableCellCache;
+@property (nonatomic,strong) NSMutableDictionary *cellClassCache;
+
+@property (nonatomic,strong) NSMutableArray *visibleCells;
+@property (nonatomic,strong) NSMutableArray *historyCells;
 
 @property (nonatomic,assign) CGPoint startPoint;
 
-@property (nonatomic,assign) NSInteger index;
+@property (nonatomic,assign) NSInteger nextIndex;
+
+@property (nonatomic,assign, readonly) CGPoint cellCenter;
 
 @end
 
 @implementation KCSwipeCard
 
 #pragma mark -Getter
+
+- (CGPoint)cellCenter
+{
+    return CGPointMake(self.frame.size.width * 0.5, self.frame.size.height * 0.5);
+}
+
+- (NSMutableArray *)visibleCells
+{
+    if (!_visibleCells) {
+        _visibleCells = @[].mutableCopy;
+    }
+    return _visibleCells;
+}
+
+- (NSMutableArray *)historyCells
+{
+    if (!_historyCells) {
+        _historyCells = @[].mutableCopy;
+    }
+    return _historyCells;
+}
 
 - (NSMutableDictionary *)reusableCellCache
 {
@@ -34,14 +60,22 @@
     return _reusableCellCache;
 }
 
-- (KCSwipeCardCell *)topCell
+- (NSMutableDictionary *)cellClassCache
 {
-    return self.subviews.lastObject;
+    if (!_cellClassCache) {
+        _cellClassCache = @{}.mutableCopy;
+    }
+    return _cellClassCache;
 }
 
-- (NSInteger)currentIndex
+- (KCSwipeCardCell *)topCell
 {
-    return self.index - self.numberOfActiveItems;
+    return self.visibleCells.firstObject;;
+}
+
+- (NSInteger)topIndex
+{
+    return self.nextIndex - self.visibleCells.count;
 }
 
 - (CGSize)sizeForItemAtIndex:(NSInteger)index
@@ -54,6 +88,15 @@
         
         return self.bounds.size;
     }
+}
+
+- (NSInteger)numberOfHistoryItems
+{
+    if ([self.dataSource respondsToSelector:@selector(numberOfHistoryItemsInSwipeCard:)]) {
+        return [self.dataSource numberOfHistoryItemsInSwipeCard:self];
+    }
+    
+    return 1;
 }
 
 - (NSInteger)numberOfActiveItems
@@ -70,53 +113,58 @@
     return [self.dataSource numberOfItemsInSwipeCard:self];
 }
 
-
-- (NSMutableSet *)usageCells
+- (CGPoint)offsetForItemAtIndex:(NSInteger)index
 {
-    if (!_usageCells) {
-        _usageCells = [NSMutableSet set];
+    if ([self.dataSource respondsToSelector:@selector(swipeCard:offsetForItemAtIndex:)]) {
+        return [self.dataSource swipeCard:self offsetForItemAtIndex:index];
     }
-    return _usageCells;
+    return self.offsetForItem;
 }
+
+#pragma mark -Setter
 
 #pragma mark -Life Cycle
 - (instancetype)initWithFrame:(CGRect)frame
 {
     if (self = [super initWithFrame:frame]) {
-        _animationDuration = 0.5;
-//        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(pan:)];
-//        [self addGestureRecognizer:pan];
         
+        _animationDuration = 0.5;
         
     }
     return self;
+}
+
+- (void)didMoveToSuperview {
+    [self reloadData];
 }
 
 #pragma mark -Event
 
 - (void)handlePan:(UIPanGestureRecognizer *)pan cell:(KCSwipeCardCell *)cell
 {
-    CGPoint point = [pan locationInView:self];
     
     // 判断是否允许滑动
     if ([self.delegate respondsToSelector:@selector(swipeCard:shouldBeginSwipeItemAtIndex:)]) {
         
-        if (![self.delegate swipeCard:self shouldBeginSwipeItemAtIndex:self.currentIndex]) {
+        if (![self.delegate swipeCard:self shouldBeginSwipeItemAtIndex:self.topIndex]) {
             return;
         }
     }
     
-    _swipeLocation = point;
-    CGPoint translation = [pan translationInView:self];
+    _swipeLocation = [pan locationInView:self];
+    _swipeTranslation = [pan translationInView:self];
     
     if (pan.state == UIGestureRecognizerStateBegan) {
         
-        self.startPoint = point;
+//        self.startPoint = _swipeLocation;
         
         // 将要开始滑动
         if ([self.delegate respondsToSelector:@selector(swipeCard:willBeginSwipeItemAtIndex:)]) {
-            [self.delegate swipeCard:self willBeginSwipeItemAtIndex:self.currentIndex];
+            [self.delegate swipeCard:self willBeginSwipeItemAtIndex:self.topIndex];
+        
         }
+        
+        
         return;
     }
     
@@ -150,18 +198,15 @@
     // 正在滑动
     if ([self.delegate respondsToSelector:@selector(swipeCard:didSwipeItemAtIndex:inDirection:)]) {
         
-        [self.delegate swipeCard:self didSwipeItemAtIndex:self.currentIndex inDirection:direction];
+        [self.delegate swipeCard:self didSwipeItemAtIndex:self.topIndex inDirection:direction];
     }
-    
-    _swipeTranslation = CGPointMake(point.x - self.startPoint.x, point.y - self.startPoint.y);
     
     if (pan.state == UIGestureRecognizerStateChanged) {
         
-        CGFloat angle = (cell.frame.size.width * 0.5 + translation.x - cell.frame.size.width / 2.0) / cell.frame.size.width / 4.0;
+        cell.center = CGPointMake(self.cellCenter.x + _swipeTranslation.x, self.cellCenter.y + _swipeTranslation.y);
+        CGFloat angle = (cell.center.x - cell.frame.size.width / 2.0) / cell.frame.size.width / 4.0;
         
-        CGAffineTransform transform = CGAffineTransformTranslate(cell.transform, translation.x, translation.y);
-        
-        cell.transform = CGAffineTransformRotate(transform, angle);
+        cell.transform = CGAffineTransformMakeRotation(angle);
         
     } else if (pan.state == UIGestureRecognizerStateEnded) {
         
@@ -174,16 +219,16 @@
                     
                     if (_swipeTranslation.x < 0) {
                         
-                        [self swipeToDirection:KCSwipeCardSwipeDirectionLeft translation:translation cell:cell];
+                        [self swipeToDirection:KCSwipeCardSwipeDirectionLeft cell:cell];
                         
-                    }else {
+                    }else { 
                         
-                        [self swipeToDirection:KCSwipeCardSwipeDirectionRight translation:translation cell:cell];
+                        [self swipeToDirection:KCSwipeCardSwipeDirectionRight cell:cell];
                     }
                     
                 }else {
                     
-                    [self cancelSwipeToDirection:direction translation:translation cell:cell];
+                    [self cancelSwipeToDirection:direction cell:cell];
                     
                 }
                 
@@ -196,16 +241,16 @@
                     
                     if (_swipeTranslation.y < 0) {
                         
-                        [self swipeToDirection:KCSwipeCardSwipeDirectionTop translation:translation cell:cell];
+                        [self swipeToDirection:KCSwipeCardSwipeDirectionTop cell:cell];
                         
                     }else {
                         
-                        [self swipeToDirection:KCSwipeCardSwipeDirectionBottom translation:translation cell:cell];
+                        [self swipeToDirection:KCSwipeCardSwipeDirectionBottom cell:cell];
                     }
                     
                 }else {
                     
-                    [self cancelSwipeToDirection:direction translation:translation cell:cell];
+                    [self cancelSwipeToDirection:direction cell:cell];
                     
                 }
                 
@@ -214,40 +259,69 @@
                 break;
                 
             default:
+                [self cancelSwipeToDirection:direction cell:cell];
                 break;
         }
         
         
-        if ([self.delegate respondsToSelector:@selector(swipeCard:didEndSwipeItemAtIndex:inDirection:)]) {
-            [self.delegate swipeCard:self didEndSwipeItemAtIndex:self.currentIndex inDirection:direction];
-        }
         
     }else if (pan.state == UIGestureRecognizerStateCancelled || pan.state == UIGestureRecognizerStateFailed) {
         
-        [self cancelSwipeToDirection:direction translation:translation cell:cell];
-        
-        if ([self.delegate respondsToSelector:@selector(swipeCard:didEndSwipeItemAtIndex:inDirection:)]) {
-            [self.delegate swipeCard:self didEndSwipeItemAtIndex:self.currentIndex inDirection:direction];
-        }
+        [self cancelSwipeToDirection:direction cell:cell];
         
     }
     
-    [pan setTranslation:CGPointZero inView:self];
 }
 
 
 #pragma mark -Public Method
 
+- (NSInteger)indexForCell:(KCSwipeCardCell *)cell
+{
+    NSInteger index = [self.visibleCells indexOfObject:cell];
+    return index + self.topIndex;
+}
+
+- (void)swipeCardToDirection:(KCSwipeCardSwipeDirection)direction
+{
+    [self swipeToDirection:direction cell:self.topCell];
+}
+
+
+- (void)registerClass:(Class)cellClass forCellReuseIdentifier:(NSString *)identifier
+{
+    self.cellClassCache[identifier] = cellClass;
+}
 
 - (KCSwipeCardCell *)dequeueReusableCellWithIdentifier:(NSString *)identifier
 {
-    return [self.reusableCellCache[identifier] anyObject];
+    KCSwipeCardCell *cell = [self.reusableCellCache[identifier] anyObject];
+    
+    if (cell) {
+        
+        [self.reusableCellCache[cell.reuseIdentifier] removeObject:cell];
+        
+        return cell;
+    }
+    
+    Class cellClass = self.cellClassCache[identifier];
+    
+    if (cellClass) {
+        
+        cell = [[cellClass alloc] initWithReuseIdentifier:identifier];
+    }
+    
+    return cell;
 }
 
 - (void)reloadData
 {
     
-    [self.usageCells makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    [self.visibleCells makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    [self.visibleCells removeAllObjects];
+    [self.reusableCellCache removeAllObjects];
+    [self.historyCells removeAllObjects];
+    self.nextIndex = 0;
     
     for (int i = 0; i < self.numberOfActiveItems; i++) {
         
@@ -255,83 +329,106 @@
         
     }
     
+    [self refreshLayoutAnimated:NO];
 }
 
-- (void)swipeToDirection:(KCSwipeCardSwipeDirection)direction translation:(CGPoint)translation cell:(KCSwipeCardCell *)cell
+#pragma mark -Private Method
+- (void)swipeToDirection:(KCSwipeCardSwipeDirection)direction cell:(KCSwipeCardCell *)cell
 {
-    if (cell != self.topCell) {
-        
-        [self cancelSwipeToDirection:direction translation:translation cell:cell];
-        
+    if (!cell) {
         return;
     }
     
+    if (cell != self.topCell) {
+        
+        [self cancelSwipeToDirection:direction cell:cell];
+        return;
+        
+    }
+    
+    NSInteger index = [self indexForCell:cell];
+    
     if ([self.delegate respondsToSelector:@selector(swipeCard:shouldSwipeItemAtIndex:inDirection:)]) {
         
-        if (![self.delegate swipeCard:self shouldSwipeItemAtIndex:self.currentIndex inDirection:direction]) {
+        if (![self.delegate swipeCard:self shouldSwipeItemAtIndex:index inDirection:direction]) {
             
-            [self cancelSwipeToDirection:direction translation:translation cell:cell];
+            [self cancelSwipeToDirection:direction cell:cell];
             
             return;
         }
         
     }
     
+    CGFloat translationX = 0;
+    CGFloat translationY = 0;
     switch (direction) {
         case KCSwipeCardSwipeDirectionTop:
-            
-            translation.y = -[UIScreen mainScreen].bounds.size.height;
+            translationY = -[UIScreen mainScreen].bounds.size.height;
             
             break;
         case KCSwipeCardSwipeDirectionBottom:
             
-            translation.y = [UIScreen mainScreen].bounds.size.height;
+            translationY = [UIScreen mainScreen].bounds.size.height;
+            
             break;
         case KCSwipeCardSwipeDirectionLeft:
-            
-            translation.x = -[UIScreen mainScreen].bounds.size.width;
+            translationX = -[UIScreen mainScreen].bounds.size.width;
             
             break;
         case KCSwipeCardSwipeDirectionRight:
             
-            translation.x = [UIScreen mainScreen].bounds.size.width;
+            translationX = [UIScreen mainScreen].bounds.size.width;
             break;
             
         default:
             break;
     }
     
-    
-    if ([self.delegate respondsToSelector:@selector(swipeCard:didSwipeItemAtIndex:inDirection:)]) {
-        [self.delegate swipeCard:self didSwipeItemAtIndex:self.currentIndex inDirection:direction];
-    }
-    
-    CGFloat angle = (cell.frame.size.width * 0.5 + translation.x - cell.frame.size.width / 2.0) / cell.frame.size.width / 4.0;
-    
-    CGAffineTransform transform = CGAffineTransformTranslate(cell.transform, translation.x, translation.y);
-    
     [UIView animateWithDuration:_animationDuration animations:^{
         
-        cell.transform = CGAffineTransformRotate(transform, angle);
-        
+//        cell.center = CGPointMake(self.cellCenter.x + translationX, self.cellCenter.y + translationY);
+        cell.center = CGPointMake(cell.center.x + translationX, cell.center.y + translationY);
+        CGFloat angle = (cell.center.x - cell.frame.size.width / 2.0) / cell.frame.size.width / 4.0;
+        cell.transform = CGAffineTransformMakeRotation(angle);
         
     }completion:^(BOOL finished) {
         
-        [self nextCell];
-        [self reuseCell];
+        [cell removeFromSuperview];
+        [self historyCell:cell];
+        
+        if ([self.delegate respondsToSelector:@selector(swipeCard:didEndSwipeItemAtIndex:inDirection:)]) {
+            [self.delegate swipeCard:self didEndSwipeItemAtIndex:index inDirection:direction];
+        }
         
     }];
     
+    
+    if ([self.delegate respondsToSelector:@selector(swipeCard:didSwipeItemAtIndex:inDirection:)]) {
+        [self.delegate swipeCard:self didSwipeItemAtIndex:index inDirection:direction];
+    }
+    
+    [self.visibleCells removeObject:cell];
+    [self nextCell];
+    [self refreshLayoutAnimated:YES];
+    
 }
 
-- (void)cancelSwipeToDirection:(KCSwipeCardSwipeDirection)direction translation:(CGPoint)translation cell:(KCSwipeCardCell *)cell
+- (void)cancelSwipeToDirection:(KCSwipeCardSwipeDirection)direction cell:(KCSwipeCardCell *)cell
 {
+    NSInteger index = [self indexForCell:cell];
+    
     if ([self.delegate respondsToSelector:@selector(swipeCard:didCancelSwipeItemAtIndex:inDirection:)]) {
-        [self.delegate swipeCard:self didCancelSwipeItemAtIndex:self.currentIndex inDirection:direction];
+        [self.delegate swipeCard:self didCancelSwipeItemAtIndex:index inDirection:direction];
     }
     
     [UIView animateWithDuration:_animationDuration animations:^{
         cell.transform = CGAffineTransformIdentity;
+        cell.center = CGPointMake(self.bounds.size.width * 0.5, self.bounds.size.height * 0.5);
+    } completion:^(BOOL finished) {
+        
+        if ([self.delegate respondsToSelector:@selector(swipeCard:didEndCancelSwipeItemAtIndex:inDirection:)]) {
+            [self.delegate swipeCard:self didEndCancelSwipeItemAtIndex:index inDirection:direction];
+        }
     }];
 }
 
@@ -342,58 +439,106 @@
 
 - (void)nextCell
 {
-    if (self.index == self.numberOfItems) {
+    
+    if (self.nextIndex >= self.numberOfItems || !self.dataSource) {
         return;
     }
     
-    KCSwipeCardCell *cell = [self.dataSource swipeCard:self cellForItemAtIndex:self.index];
+    if ([self.delegate respondsToSelector:@selector(swipeCard:willLoadItemAtIndex:)]) {
+        [self.delegate swipeCard:self willLoadItemAtIndex:self.nextIndex];
+    }
+    
+    NSInteger index = self.nextIndex;
+    
+    KCSwipeCardCell *cell = [self.dataSource swipeCard:self cellForItemAtIndex:index];
+    
+    if (!cell) {
+        return;
+    }
+    
     __weak typeof(self) weakSelf = self;
     cell.panBlock = ^(KCSwipeCardCell *cell, UIPanGestureRecognizer *pan) {
-//        if (cell != self.topCell) {
-//            return;
-//        }
         [weakSelf handlePan:pan cell:cell];
     };
     
     [self insertSubview:cell atIndex:0];
     
-    [self.usageCells addObject:cell];
-//    [self.reusableCells removeObject:cell];
+    [self.visibleCells addObject:cell];
     
-    [self.reusableCellCache[cell.reuseIdentifier] removeObject:cell];
+    if ([self.delegate respondsToSelector:@selector(swipeCard:didLoadItemAtIndex:)]) {
+        [self.delegate swipeCard:self didLoadItemAtIndex:index];
+    }
     
-    CGSize size = [self sizeForItemAtIndex:self.index];
-    cell.frame = CGRectMake(0, 0, size.width, size.height);
-    cell.center = CGPointMake(self.bounds.size.width * 0.5, self.bounds.size.height * 0.5);
+    self.nextIndex++;
     
-//    CGFloat scale = 1 - self.usageCells.count * 0.1;
     
-//    cell.transform = CGAffineTransformMakeScale(scale, scale);
-    
-//    cell.transform = CGAffineTransformMakeTranslation(0, 10);
-    
-    self.index++;
-
 }
 
-- (void)reuseCell
+- (void)refreshLayoutAnimated:(BOOL)animated
 {
-    self.topCell.transform = CGAffineTransformIdentity;
-    self.topCell.alpha = 1;
     
-    NSMutableSet *set = self.reusableCellCache[self.topCell.reuseIdentifier];
+    [UIView animateWithDuration:animated ? _animationDuration : 0 delay:0 options:UIViewAnimationOptionAllowUserInteraction animations:^{
+        for (int i = 0; i < self.visibleCells.count; i++) {
+            
+            NSInteger index = self.topIndex + i;
+            CGSize size = [self sizeForItemAtIndex:index];
+            
+            KCSwipeCardCell *cell = self.visibleCells[i];
+            
+            cell.frame = CGRectMake(0, 0, size.width, size.height);
+            
+            if (i == 0) {
+                
+                cell.center = CGPointMake(self.bounds.size.width * 0.5, self.bounds.size.height * 0.5);
+                
+                
+            }else {
+                
+                CGPoint offset = [self offsetForItemAtIndex:index];
+                
+                KCSwipeCardCell *previousCell = self.visibleCells[i - 1];
+                
+                cell.center = CGPointMake(previousCell.center.x + offset.x, previousCell.center.y + offset.y);
+                
+            }
+            
+        }
+        
+    } completion:^(BOOL finished) {
+        
+    }];
+    
+}
+
+- (void)historyCell:(KCSwipeCardCell *)cell
+{
+    
+    [self.historyCells insertObject:cell atIndex:0];
+    
+    if (self.historyCells.count >= self.numberOfHistoryItems) {
+        
+        KCSwipeCardCell *lastCell = self.historyCells.lastObject;
+        [self.historyCells removeLastObject];
+        [self reuseCell:lastCell];
+        
+    }
+    
+}
+
+- (void)reuseCell:(KCSwipeCardCell *)cell
+{
+    cell.transform = CGAffineTransformMakeRotation(0);
+    cell.center = self.cellCenter;
+    NSMutableSet *set = self.reusableCellCache[cell.reuseIdentifier];
     
     if (!set) {
         set = [NSMutableSet set];
-        self.reusableCellCache[self.topCell.reuseIdentifier] = set;
+        self.reusableCellCache[cell.reuseIdentifier] = set;
     }
     
-    [set addObject:self.topCell];
-    [self.usageCells removeObject:self.topCell];
-    [self.topCell removeFromSuperview];
+    [set addObject:cell];
     
 }
-
 
 
 @end

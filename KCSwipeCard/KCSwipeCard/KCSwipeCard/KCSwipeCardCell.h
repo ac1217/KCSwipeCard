@@ -10,11 +10,13 @@
 
 @interface KCSwipeCardCell : UIView
 
+@property (nonatomic,strong,readonly) UIPanGestureRecognizer *panGestureRecognizer;
+
 @property (nonatomic,copy) void(^panBlock)(KCSwipeCardCell *cell, UIPanGestureRecognizer *pan);
 
 @property (nonatomic, copy, readonly) NSString *reuseIdentifier;
 
 - (instancetype)initWithReuseIdentifier:(NSString *)reuseIdentifier;
 
-
+@property (nonatomic,strong) UILabel *label;
 @end

@@ -13,6 +13,7 @@
 typedef enum : NSUInteger {
     KCSwipeCardSwipeDirectionHorizontal,
     KCSwipeCardSwipeDirectionVertical,
+    KCSwipeCardSwipeDirectionAll,
     KCSwipeCardSwipeDirectionLeft,
     KCSwipeCardSwipeDirectionRight,
     KCSwipeCardSwipeDirectionTop,
@@ -26,15 +27,26 @@ typedef enum : NSUInteger {
 
 @optional
 - (NSInteger)numberOfActiveItemsInSwipeCard:(KCSwipeCard *)swipeCard;
+- (NSInteger)numberOfHistoryItemsInSwipeCard:(KCSwipeCard *)swipeCard;
 // default is equal to cardView's bounds
 - (CGSize)swipeCard:(KCSwipeCard *)swipeCard sizeForItemAtIndex:(NSInteger)index;
+- (CGPoint)swipeCard:(KCSwipeCard *)swipeCard offsetForItemAtIndex:(NSInteger)index;
 
 @end
 
 @protocol KCSwipeCardDelegate <NSObject>
 
-// 滑过一张
+@optional
+// 下一张卡片将要加载
+- (void)swipeCard:(KCSwipeCard *)swipeCard willLoadItemAtIndex:(NSInteger)index;
+// 下一张卡片加载完成
+- (void)swipeCard:(KCSwipeCard *)swipeCard didLoadItemAtIndex:(NSInteger)index;
+
+// 成功滑过一张
 - (void)swipeCard:(KCSwipeCard *)swipeCard didSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction;
+
+// 滑动完毕
+- (void)swipeCard:(KCSwipeCard *)swipeCard didEndSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction;
 
 // 是否允许结束滑动
 - (BOOL)swipeCard:(KCSwipeCard *)swipeCard shouldSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction;
@@ -42,8 +54,8 @@ typedef enum : NSUInteger {
 // 取消滑动
 - (void)swipeCard:(KCSwipeCard *)swipeCard didCancelSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction;
 
-// 松开手
-- (void)swipeCard:(KCSwipeCard *)swipeCard didEndSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction;
+// 取消滑动完成
+- (void)swipeCard:(KCSwipeCard *)swipeCard didEndCancelSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction;
 
 // 将要滑动
 - (void)swipeCard:(KCSwipeCard *)swipeCard willBeginSwipeItemAtIndex:(NSInteger)index;
@@ -52,17 +64,18 @@ typedef enum : NSUInteger {
 // 是否允许开始滑动
 - (BOOL)swipeCard:(KCSwipeCard *)swipeCard shouldBeginSwipeItemAtIndex:(NSInteger)index;
 
-// 动画执行完毕
-- (void)swipeCard:(KCSwipeCard *)swipeCard didEndSwipeDeceleratingCell:(KCSwipeCardCell *)cell inDirection:(KCSwipeCardSwipeDirection)direction;
 
 @end
 
 @interface KCSwipeCard : UIView
 
+@property (nonatomic,assign, readonly) NSInteger numberOfHistoryItems;
 @property (nonatomic,assign, readonly) NSInteger numberOfActiveItems;
 @property (nonatomic,assign, readonly) NSInteger numberOfItems;
-@property (nonatomic,assign, readonly) NSInteger currentIndex;
+@property (nonatomic,assign, readonly) NSInteger topIndex;
+
 @property (nonatomic,strong, readonly) KCSwipeCardCell *topCell;
+@property (nonatomic,strong, readonly) NSMutableArray *visibleCells;
 
 @property (nonatomic, weak) id <KCSwipeCardDataSource> dataSource;
 @property (nonatomic, weak) id <KCSwipeCardDelegate> delegate;
@@ -70,13 +83,17 @@ typedef enum : NSUInteger {
 @property (nonatomic,assign) KCSwipeCardSwipeDirection swipeDirection;
 @property (nonatomic,assign) NSTimeInterval animationDuration;
 
+- (void)registerClass:(Class)cellClass forCellReuseIdentifier:(NSString *)identifier;
 - (__kindof KCSwipeCardCell *)dequeueReusableCellWithIdentifier:(NSString *)identifier;
 - (void)reloadData;
 
-//- (KCSwipeCardCell *)cellForItemAtIndex:(NSInteger)index;
 
+- (NSInteger)indexForCell:(KCSwipeCardCell *)cell;
+- (void)swipeCardToDirection:(KCSwipeCardSwipeDirection)direction;
 
 @property (nonatomic,assign, readonly) CGPoint swipeLocation;
 @property (nonatomic,assign, readonly) CGPoint swipeTranslation;
+
+@property (nonatomic, assign) CGPoint offsetForItem;
 
 @end
