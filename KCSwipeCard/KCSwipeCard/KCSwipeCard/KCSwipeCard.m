@@ -21,7 +21,7 @@
 
 @property (nonatomic,assign) CGPoint startPoint;
 
-@property (nonatomic,assign) NSInteger nextIndex;
+@property (nonatomic,assign) NSInteger nextItemIndex;
 
 @property (nonatomic,assign, readonly) CGPoint cellCenter;
 
@@ -73,9 +73,9 @@
     return self.visibleCells.firstObject;;
 }
 
-- (NSInteger)topIndex
+- (NSInteger)topItemIndex
 {
-    return self.nextIndex - self.visibleCells.count;
+    return self.nextItemIndex - self.visibleCells.count;
 }
 
 - (CGSize)sizeForItemAtIndex:(NSInteger)index
@@ -144,7 +144,6 @@
 {
     _animationDuration = 0.5;
     
-    
 }
 
 #pragma mark -Event
@@ -155,7 +154,7 @@
     // 判断是否允许滑动
     if ([self.delegate respondsToSelector:@selector(swipeCard:shouldBeginSwipeItemAtIndex:)]) {
         
-        if (![self.delegate swipeCard:self shouldBeginSwipeItemAtIndex:self.topIndex]) {
+        if (![self.delegate swipeCard:self shouldBeginSwipeItemAtIndex:self.topItemIndex]) {
             return;
         }
     }
@@ -169,7 +168,7 @@
         
         // 将要开始滑动
         if ([self.delegate respondsToSelector:@selector(swipeCard:willBeginSwipeItemAtIndex:)]) {
-            [self.delegate swipeCard:self willBeginSwipeItemAtIndex:self.topIndex];
+            [self.delegate swipeCard:self willBeginSwipeItemAtIndex:self.topItemIndex];
         
         }
         
@@ -216,7 +215,7 @@
         // 正在滑动
         if ([self.delegate respondsToSelector:@selector(swipeCard:swipeItemAtIndex:inDirection:)]) {
             
-            [self.delegate swipeCard:self swipeItemAtIndex:self.topIndex inDirection:direction];
+            [self.delegate swipeCard:self swipeItemAtIndex:self.topItemIndex inDirection:direction];
         }
         
     } else if (pan.state == UIGestureRecognizerStateEnded) {
@@ -290,10 +289,10 @@
 - (NSInteger)indexForCell:(KCSwipeCardCell *)cell
 {
     NSInteger index = [self.visibleCells indexOfObject:cell];
-    return index + self.topIndex;
+    return index + self.topItemIndex;
 }
 
-- (void)swipeCardToDirection:(KCSwipeCardSwipeDirection)direction
+- (void)swipeTopItemToDirection:(KCSwipeCardSwipeDirection)direction
 {
     [self swipeToDirection:direction cell:self.topCell];
 }
@@ -344,7 +343,7 @@
     [self.visibleCells removeAllObjects];
     [self.reusableCellCache removeAllObjects];
     [self.historyCells removeAllObjects];
-    self.nextIndex = 0;
+    self.nextItemIndex = 0;
     
     for (int i = 0; i < self.numberOfActiveItems; i++) {
         
@@ -463,15 +462,15 @@
 - (void)nextCell
 {
     
-    if (self.nextIndex >= self.numberOfItems || !self.dataSource) {
+    if (self.nextItemIndex >= self.numberOfItems || !self.dataSource) {
         return;
     }
     
     if ([self.delegate respondsToSelector:@selector(swipeCard:willLoadItemAtIndex:)]) {
-        [self.delegate swipeCard:self willLoadItemAtIndex:self.nextIndex];
+        [self.delegate swipeCard:self willLoadItemAtIndex:self.nextItemIndex];
     }
     
-    NSInteger index = self.nextIndex;
+    NSInteger index = self.nextItemIndex;
     
     KCSwipeCardCell *cell = [self.dataSource swipeCard:self cellForItemAtIndex:index];
     
@@ -490,7 +489,7 @@
         [self.delegate swipeCard:self didLoadItemAtIndex:index];
     }
     
-    self.nextIndex++;
+    self.nextItemIndex++;
     
 }
 
@@ -500,7 +499,7 @@
     [UIView animateWithDuration:animated ? _animationDuration : 0 delay:0 options:UIViewAnimationOptionAllowUserInteraction animations:^{
         for (int i = 0; i < self.visibleCells.count; i++) {
             
-            NSInteger index = self.topIndex + i;
+            NSInteger index = self.topItemIndex + i;
             CGSize size = [self sizeForItemAtIndex:index];
             
             KCSwipeCardCell *cell = self.visibleCells[i];

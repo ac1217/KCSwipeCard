@@ -76,7 +76,7 @@ typedef enum : NSUInteger {
 @property (nonatomic,assign, readonly) NSInteger numberOfItems;
 
 // 顶部cell索引
-@property (nonatomic,assign, readonly) NSInteger topIndex;
+@property (nonatomic,assign, readonly) NSInteger topItemIndex;
 @property (nonatomic,strong, readonly) KCSwipeCardCell *topCell;
 
 // 正在显示的cell
@@ -95,7 +95,7 @@ typedef enum : NSUInteger {
 - (__kindof KCSwipeCardCell *)dequeueReusableCellWithIdentifier:(NSString *)identifier;
 
 - (NSInteger)indexForCell:(KCSwipeCardCell *)cell;
-- (void)swipeCardToDirection:(KCSwipeCardSwipeDirection)direction;
+- (void)swipeTopItemToDirection:(KCSwipeCardSwipeDirection)direction;
 
 - (void)reloadData;
 
