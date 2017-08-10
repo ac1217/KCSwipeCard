@@ -42,13 +42,16 @@ typedef enum : NSUInteger {
 // 下一张卡片加载完成
 - (void)swipeCard:(KCSwipeCard *)swipeCard didLoadItemAtIndex:(NSInteger)index;
 
+// 正在滑动
+- (void)swipeCard:(KCSwipeCard *)swipeCard swipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction;
+
 // 成功滑过一张
 - (void)swipeCard:(KCSwipeCard *)swipeCard didSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction;
 
 // 滑动完毕
 - (void)swipeCard:(KCSwipeCard *)swipeCard didEndSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction;
 
-// 是否允许结束滑动
+// 是否成功滑过一张
 - (BOOL)swipeCard:(KCSwipeCard *)swipeCard shouldSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction;
 
 // 取消滑动

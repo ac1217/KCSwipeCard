@@ -69,16 +69,6 @@ static NSString * KCSwipeCardCellReuseID = @"KCSwipeCardCell";
 
 #pragma mark -KCSwipeCardDelegate
 
-- (void)swipeCard:(KCSwipeCard *)swipeCard didEndCancelSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction
-{
-    
-}
-
-- (void)swipeCard:(KCSwipeCard *)swipeCard didCancelSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction
-{
-    
-}
-
 - (void)swipeCard:(KCSwipeCard *)swipeCard didEndSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction
 {
     NSLog(@"didEndSwipeItemAtIndex---&=%zd", index);

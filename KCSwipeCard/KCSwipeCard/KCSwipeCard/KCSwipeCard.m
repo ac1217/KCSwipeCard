@@ -204,11 +204,6 @@
         
     }
     
-    // 正在滑动
-    if ([self.delegate respondsToSelector:@selector(swipeCard:didSwipeItemAtIndex:inDirection:)]) {
-        
-        [self.delegate swipeCard:self didSwipeItemAtIndex:self.topIndex inDirection:direction];
-    }
     
     if (pan.state == UIGestureRecognizerStateChanged) {
         
@@ -216,6 +211,13 @@
         CGFloat angle = (cell.center.x - cell.frame.size.width / 2.0) / cell.frame.size.width / 4.0;
         
         cell.transform = CGAffineTransformMakeRotation(angle);
+        
+        
+        // 正在滑动
+        if ([self.delegate respondsToSelector:@selector(swipeCard:swipeItemAtIndex:inDirection:)]) {
+            
+            [self.delegate swipeCard:self swipeItemAtIndex:self.topIndex inDirection:direction];
+        }
         
     } else if (pan.state == UIGestureRecognizerStateEnded) {
         
