@@ -60,7 +60,6 @@ typedef enum : NSUInteger {
 // 将要滑动
 - (void)swipeCard:(KCSwipeCard *)swipeCard willBeginSwipeItemAtIndex:(NSInteger)index;
 
-
 // 是否允许开始滑动
 - (BOOL)swipeCard:(KCSwipeCard *)swipeCard shouldBeginSwipeItemAtIndex:(NSInteger)index;
 
@@ -72,28 +71,33 @@ typedef enum : NSUInteger {
 @property (nonatomic,assign, readonly) NSInteger numberOfHistoryItems;
 @property (nonatomic,assign, readonly) NSInteger numberOfActiveItems;
 @property (nonatomic,assign, readonly) NSInteger numberOfItems;
-@property (nonatomic,assign, readonly) NSInteger topIndex;
 
+// 顶部cell索引
+@property (nonatomic,assign, readonly) NSInteger topIndex;
 @property (nonatomic,strong, readonly) KCSwipeCardCell *topCell;
-@property (nonatomic,strong, readonly) NSMutableArray *visibleCells;
+
+// 正在显示的cell
+@property (nonatomic,strong, readonly) NSMutableArray <KCSwipeCardCell *>*visibleCells;
 
 @property (nonatomic, weak) id <KCSwipeCardDataSource> dataSource;
 @property (nonatomic, weak) id <KCSwipeCardDelegate> delegate;
 
+// 允许滑动的方向，默认水平方向
 @property (nonatomic,assign) KCSwipeCardSwipeDirection swipeDirection;
+// 动画时长
 @property (nonatomic,assign) NSTimeInterval animationDuration;
 
 - (void)registerClass:(Class)cellClass forCellReuseIdentifier:(NSString *)identifier;
+- (void)registerNib:(UINib *)nib forCellReuseIdentifier:(NSString *)identifier;
 - (__kindof KCSwipeCardCell *)dequeueReusableCellWithIdentifier:(NSString *)identifier;
-- (void)reloadData;
-
 
 - (NSInteger)indexForCell:(KCSwipeCardCell *)cell;
 - (void)swipeCardToDirection:(KCSwipeCardSwipeDirection)direction;
 
+- (void)reloadData;
+
 @property (nonatomic,assign, readonly) CGPoint swipeLocation;
 @property (nonatomic,assign, readonly) CGPoint swipeTranslation;
-
 @property (nonatomic, assign) CGPoint offsetForItem;
 
 @end

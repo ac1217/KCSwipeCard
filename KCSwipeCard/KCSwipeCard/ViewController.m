@@ -29,8 +29,6 @@ static NSString * KCSwipeCardCellReuseID = @"KCSwipeCardCell";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
-//    UIScrollViewDelegate
     
 //    UITableView *tb;
 //    [tb registerClass:nil forCellReuseIdentifier:nil];
@@ -41,8 +39,6 @@ static NSString * KCSwipeCardCellReuseID = @"KCSwipeCardCell";
     [self.view addSubview:self.swipeCard];
     
     self.swipeCard.frame = CGRectMake(30, 100, 300, 480);
-    
-//    self.swipeCard.center = self.view.center;
     
     self.swipeCard.offsetForItem = CGPointMake(5, 5);
     
@@ -66,8 +62,6 @@ static NSString * KCSwipeCardCellReuseID = @"KCSwipeCardCell";
     
     cell.layer.cornerRadius = 10;
     cell.clipsToBounds = YES;
-    
-    cell.label.text = [NSString stringWithFormat:@"当前第%zd张", index];
     
     return cell;
     

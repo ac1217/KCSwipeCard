@@ -14,7 +14,7 @@
 }
 
 @property (nonatomic,strong) NSMutableDictionary *reusableCellCache;
-@property (nonatomic,strong) NSMutableDictionary *cellClassCache;
+@property (nonatomic,strong) NSMutableDictionary *cellSourceCache;
 
 @property (nonatomic,strong) NSMutableArray *visibleCells;
 @property (nonatomic,strong) NSMutableArray *historyCells;
@@ -60,12 +60,12 @@
     return _reusableCellCache;
 }
 
-- (NSMutableDictionary *)cellClassCache
+- (NSMutableDictionary *)cellSourceCache
 {
-    if (!_cellClassCache) {
-        _cellClassCache = @{}.mutableCopy;
+    if (!_cellSourceCache) {
+        _cellSourceCache = @{}.mutableCopy;
     }
-    return _cellClassCache;
+    return _cellSourceCache;
 }
 
 - (KCSwipeCardCell *)topCell
@@ -128,14 +128,23 @@
 {
     if (self = [super initWithFrame:frame]) {
         
-        _animationDuration = 0.5;
-        
+        [self setup];
     }
     return self;
 }
 
-- (void)didMoveToSuperview {
-    [self reloadData];
+- (void)awakeFromNib
+{
+    [super awakeFromNib];
+    
+    [self setup];
+}
+
+- (void)setup
+{
+    _animationDuration = 0.5;
+    
+    
 }
 
 #pragma mark -Event
@@ -290,25 +299,37 @@
 
 - (void)registerClass:(Class)cellClass forCellReuseIdentifier:(NSString *)identifier
 {
-    self.cellClassCache[identifier] = cellClass;
+    self.cellSourceCache[identifier] = cellClass;
+}
+
+- (void)registerNib:(UINib *)nib forCellReuseIdentifier:(NSString *)identifier
+{
+    self.cellSourceCache[identifier] = nib;
 }
 
 - (KCSwipeCardCell *)dequeueReusableCellWithIdentifier:(NSString *)identifier
 {
     KCSwipeCardCell *cell = [self.reusableCellCache[identifier] anyObject];
     
-    if (cell) {
+    if (!cell) {
+       
+        id cellSource = self.cellSourceCache[identifier];
         
-        [self.reusableCellCache[cell.reuseIdentifier] removeObject:cell];
+        if ([cellSource isKindOfClass:[UINib class]]) {
+            
+            UINib *cellNib = cellSource;
+            
+            cell = [[cellNib instantiateWithOwner:nil options:nil] lastObject];
+            
+        }else {
+            
+            cell = [[[cellSource class] alloc] initWithReuseIdentifier:identifier];
+        }
         
-        return cell;
-    }
-    
-    Class cellClass = self.cellClassCache[identifier];
-    
-    if (cellClass) {
+    }else {
         
-        cell = [[cellClass alloc] initWithReuseIdentifier:identifier];
+        [self.reusableCellCache[identifier] removeObject:cell];
+        
     }
     
     return cell;
@@ -363,21 +384,21 @@
     CGFloat translationY = 0;
     switch (direction) {
         case KCSwipeCardSwipeDirectionTop:
-            translationY = -[UIScreen mainScreen].bounds.size.height;
+            translationY = -[UIScreen mainScreen].bounds.size.height - cell.frame.size.height;
             
             break;
         case KCSwipeCardSwipeDirectionBottom:
             
-            translationY = [UIScreen mainScreen].bounds.size.height;
+            translationY = [UIScreen mainScreen].bounds.size.height + cell.frame.size.height;
             
             break;
         case KCSwipeCardSwipeDirectionLeft:
-            translationX = -[UIScreen mainScreen].bounds.size.width;
+            translationX = -([UIScreen mainScreen].bounds.size.width - cell.center.x + cell.frame.size.width * 0.5);
             
             break;
         case KCSwipeCardSwipeDirectionRight:
             
-            translationX = [UIScreen mainScreen].bounds.size.width;
+            translationX = ([UIScreen mainScreen].bounds.size.width - cell.center.x + cell.frame.size.width * 0.5);
             break;
             
         default:
@@ -452,9 +473,7 @@
     
     KCSwipeCardCell *cell = [self.dataSource swipeCard:self cellForItemAtIndex:index];
     
-    if (!cell) {
-        return;
-    }
+    NSAssert(cell, @"cell不能为空");
     
     __weak typeof(self) weakSelf = self;
     cell.panBlock = ^(KCSwipeCardCell *cell, UIPanGestureRecognizer *pan) {
@@ -470,7 +489,6 @@
     }
     
     self.nextIndex++;
-    
     
 }
 
@@ -490,7 +508,6 @@
             if (i == 0) {
                 
                 cell.center = CGPointMake(self.bounds.size.width * 0.5, self.bounds.size.height * 0.5);
-                
                 
             }else {
                 
