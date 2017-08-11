@@ -11,6 +11,8 @@
 @interface KCSwipeCard (){
     CGPoint _swipeLocation;
     CGPoint _swipeTranslation;
+    NSInteger _topItemIndex;
+    
 }
 
 @property (nonatomic,strong) NSMutableDictionary *reusableCellCache;
@@ -64,9 +66,9 @@
     return self.visibleCells.firstObject;;
 }
 
-- (NSInteger)topItemIndex
+- (NSInteger)nextItemIndex
 {
-    return self.nextItemIndex - self.visibleCells.count;
+    return self.topItemIndex + self.visibleCells.count;
 }
 
 - (CGSize)sizeForItemAtIndex:(NSInteger)index
@@ -79,15 +81,6 @@
         
         return self.bounds.size;
     }
-}
-
-- (NSInteger)numberOfHistoryItems
-{
-    if ([self.dataSource respondsToSelector:@selector(numberOfHistoryItemsInSwipeCard:)]) {
-        return [self.dataSource numberOfHistoryItemsInSwipeCard:self];
-    }
-    
-    return 1;
 }
 
 - (NSInteger)numberOfActiveItems
@@ -142,14 +135,16 @@
 - (void)handlePan:(UIPanGestureRecognizer *)pan cell:(KCSwipeCardCell *)cell
 {
     
-    if (cell != self.topCell) {
-        return;
-    }
+//    if (cell != self.topCell) {
+//        return;
+//    }
+    
+    NSInteger index = [self indexForCell:cell];
     
     // 判断是否允许滑动
     if ([self.delegate respondsToSelector:@selector(swipeCard:shouldBeginSwipeItemAtIndex:)]) {
         
-        if (![self.delegate swipeCard:self shouldBeginSwipeItemAtIndex:self.topItemIndex]) {
+        if (![self.delegate swipeCard:self shouldBeginSwipeItemAtIndex:index]) {
             return;
         }
     }
@@ -159,11 +154,9 @@
     
     if (pan.state == UIGestureRecognizerStateBegan) {
         
-//        self.startPoint = _swipeLocation;
-        
         // 将要开始滑动
         if ([self.delegate respondsToSelector:@selector(swipeCard:willBeginSwipeItemAtIndex:)]) {
-            [self.delegate swipeCard:self willBeginSwipeItemAtIndex:self.topItemIndex];
+            [self.delegate swipeCard:self willBeginSwipeItemAtIndex:index];
         
         }
         
@@ -210,10 +203,16 @@
         // 正在滑动
         if ([self.delegate respondsToSelector:@selector(swipeCard:swipeItemAtIndex:inDirection:)]) {
             
-            [self.delegate swipeCard:self swipeItemAtIndex:self.topItemIndex inDirection:direction];
+            [self.delegate swipeCard:self swipeItemAtIndex:index inDirection:direction];
         }
         
     } else if (pan.state == UIGestureRecognizerStateEnded) {
+        
+        if (cell != self.topCell) {
+            
+            [self cancelSwipeToDirection:direction cell:cell];
+            return;
+        }
         
         CGPoint velocity = [pan velocityInView:self];
         
@@ -268,8 +267,6 @@
                 break;
         }
         
-        
-        
     }else if (pan.state == UIGestureRecognizerStateCancelled || pan.state == UIGestureRecognizerStateFailed) {
         
         [self cancelSwipeToDirection:direction cell:cell];
@@ -292,11 +289,12 @@
     [self swipeToDirection:direction cell:self.topCell];
 }
 
+
 - (void)swipeItemFromDirection:(KCSwipeCardSwipeDirection)direction
 {
-    
-    [self swipeFromDirection:direction cell:[self previousCell]];
+    [self swipeFromDirection:direction];
 }
+
 
 - (void)registerClass:(Class)cellClass forCellReuseIdentifier:(NSString *)identifier
 {
@@ -342,8 +340,8 @@
     [self.visibleCells makeObjectsPerformSelector:@selector(removeFromSuperview)];
     [self.visibleCells removeAllObjects];
     [self.reusableCellCache removeAllObjects];
-//    _topItemIndex = 0;
-    self.nextItemIndex = 0;
+    _topItemIndex = 0;
+    
     
     for (int i = 0; i < self.numberOfActiveItems; i++) {
         
@@ -355,11 +353,16 @@
 }
 
 #pragma mark -Private Method
-- (void)swipeFromDirection:(KCSwipeCardSwipeDirection)direction cell:(KCSwipeCardCell *)cell {
+
+- (void)swipeFromDirection:(KCSwipeCardSwipeDirection)direction {
     
-    if (!cell) {
+    if (_topItemIndex == 0) {
         return;
     }
+    
+    _topItemIndex -= 1;
+    
+    KCSwipeCardCell *cell = [self previousCell];
     
     NSInteger index = [self indexForCell:cell];
     
@@ -376,21 +379,21 @@
     CGFloat translationY = 0;
     switch (direction) {
         case KCSwipeCardSwipeDirectionTop:
-            translationY = -[UIScreen mainScreen].bounds.size.height - cell.frame.size.height;
+            translationY = -[UIScreen mainScreen].bounds.size.height * 2;
             
             break;
         case KCSwipeCardSwipeDirectionBottom:
             
-            translationY = [UIScreen mainScreen].bounds.size.height + cell.frame.size.height;
+            translationY = [UIScreen mainScreen].bounds.size.height * 2;
             
             break;
         case KCSwipeCardSwipeDirectionLeft:
-            translationX = -([UIScreen mainScreen].bounds.size.width - cell.center.x + cell.frame.size.width * 0.5);
+            translationX = -[UIScreen mainScreen].bounds.size.width * 2;
             
             break;
         case KCSwipeCardSwipeDirectionRight:
             
-            translationX = ([UIScreen mainScreen].bounds.size.width - cell.center.x + cell.frame.size.width * 0.5);
+            translationX = [UIScreen mainScreen].bounds.size.width * 2;
             break;
             
         default:
@@ -453,21 +456,21 @@
     CGFloat translationY = 0;
     switch (direction) {
         case KCSwipeCardSwipeDirectionTop:
-            translationY = -[UIScreen mainScreen].bounds.size.height - cell.frame.size.height;
+            translationY = -[UIScreen mainScreen].bounds.size.height * 2;
             
             break;
         case KCSwipeCardSwipeDirectionBottom:
             
-            translationY = [UIScreen mainScreen].bounds.size.height + cell.frame.size.height;
+            translationY = [UIScreen mainScreen].bounds.size.height * 2;
             
             break;
         case KCSwipeCardSwipeDirectionLeft:
-            translationX = -([UIScreen mainScreen].bounds.size.width - cell.center.x + cell.frame.size.width * 0.5);
+            translationX = -[UIScreen mainScreen].bounds.size.width * 2;
             
             break;
         case KCSwipeCardSwipeDirectionRight:
             
-            translationX = ([UIScreen mainScreen].bounds.size.width - cell.center.x + cell.frame.size.width * 0.5);
+            translationX = [UIScreen mainScreen].bounds.size.width * 2;
             break;
             
         default:
@@ -497,8 +500,15 @@
     }
     
     [self.visibleCells removeObject:cell];
-    [self nextCell];
-    [self refreshLayoutAnimated:YES];
+    
+    if (_topItemIndex < self.numberOfItems) {
+        
+        _topItemIndex += 1;
+        [self nextCell];
+        [self refreshLayoutAnimated:YES];
+        
+    }
+    
     
 }
 
@@ -523,13 +533,21 @@
 
 - (KCSwipeCardCell *)previousCell
 {
-    
-    if (!self.dataSource || ![self.dataSource respondsToSelector:@selector(swipeCard:cellForItemAtIndex:)] || self.topItemIndex == 0) {
+    if (!self.dataSource || self.topItemIndex < 0) {
         
         return nil;
     }
     
-    NSInteger index = self.topItemIndex - 1;
+    
+    NSInteger index = self.topItemIndex;
+    
+    if ([self.delegate respondsToSelector:@selector(swipeCard:shouldLoadItemAtIndex:)]) {
+        if ([self.delegate swipeCard:self shouldLoadItemAtIndex:index]) {
+            return nil;
+        }
+        
+    }
+    
     
     if ([self.delegate respondsToSelector:@selector(swipeCard:willLoadItemAtIndex:)]) {
         [self.delegate swipeCard:self willLoadItemAtIndex:index];
@@ -552,7 +570,6 @@
     if ([self.delegate respondsToSelector:@selector(swipeCard:didLoadItemAtIndex:)]) {
         [self.delegate swipeCard:self didLoadItemAtIndex:index];
     }
-    self.nextItemIndex -= 1;
     
     return cell;
 }
@@ -560,11 +577,18 @@
 - (void)nextCell
 {
     
-    if (self.nextItemIndex == self.numberOfItems || !self.dataSource) {
+    if (!self.dataSource || self.nextItemIndex == self.numberOfItems) {
         return;
     }
-    
     NSInteger index = self.nextItemIndex;
+    
+    if ([self.delegate respondsToSelector:@selector(swipeCard:shouldLoadItemAtIndex:)]) {
+        if ([self.delegate swipeCard:self shouldLoadItemAtIndex:index]) {
+            return;
+        }
+        
+    }
+    
     
     if ([self.delegate respondsToSelector:@selector(swipeCard:willLoadItemAtIndex:)]) {
         [self.delegate swipeCard:self willLoadItemAtIndex:index];
@@ -591,7 +615,7 @@
         [self.delegate swipeCard:self didLoadItemAtIndex:index];
     }
     
-    self.nextItemIndex += 1;
+//    self.nextItemIndex += 1;
 }
 
 - (void)refreshLayoutAnimated:(BOOL)animated

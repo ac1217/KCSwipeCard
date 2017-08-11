@@ -50,7 +50,7 @@ static NSString * KCSwipeCardCellReuseID = @"KCSwipeCardCell";
 
 - (NSInteger)numberOfItemsInSwipeCard:(KCSwipeCard *)swipeCard
 {
-    return 10;
+    return 5;
 }
 
 - (KCSwipeCardCell *)swipeCard:(KCSwipeCard *)swipeCard cellForItemAtIndex:(NSInteger)index
@@ -82,7 +82,7 @@ static NSString * KCSwipeCardCellReuseID = @"KCSwipeCardCell";
 
 - (void)swipeCard:(KCSwipeCard *)swipeCard didEndSwipeItemAtIndex:(NSInteger)index inDirection:(KCSwipeCardSwipeDirection)direction
 {
-    NSLog(@"didEndSwipeItemAtIndex---&=%zd", index);
+//    NSLog(@"didEndSwipeItemAtIndex---&=%zd", index);
 }
 
 - (IBAction)right {

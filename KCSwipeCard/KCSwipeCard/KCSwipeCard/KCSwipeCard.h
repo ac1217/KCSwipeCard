@@ -27,7 +27,6 @@ typedef enum : NSUInteger {
 
 @optional
 - (NSInteger)numberOfActiveItemsInSwipeCard:(KCSwipeCard *)swipeCard;
-- (NSInteger)numberOfHistoryItemsInSwipeCard:(KCSwipeCard *)swipeCard;
 // default is equal to cardView's bounds
 - (CGSize)swipeCard:(KCSwipeCard *)swipeCard sizeForItemAtIndex:(NSInteger)index;
 - (CGPoint)swipeCard:(KCSwipeCard *)swipeCard offsetForItemAtIndex:(NSInteger)index;
@@ -38,6 +37,8 @@ typedef enum : NSUInteger {
 @protocol KCSwipeCardDelegate <NSObject>
 
 @optional
+// 是否允许加载第index张
+- (BOOL)swipeCard:(KCSwipeCard *)swipeCard shouldLoadItemAtIndex:(NSInteger)index;
 // 下一张卡片将要加载
 - (void)swipeCard:(KCSwipeCard *)swipeCard willLoadItemAtIndex:(NSInteger)index;
 // 下一张卡片加载完成
@@ -72,7 +73,6 @@ typedef enum : NSUInteger {
 
 @interface KCSwipeCard : UIView
 
-@property (nonatomic,assign, readonly) NSInteger numberOfHistoryItems;
 @property (nonatomic,assign, readonly) NSInteger numberOfActiveItems;
 @property (nonatomic,assign, readonly) NSInteger numberOfItems;
 
