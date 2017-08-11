@@ -36,11 +36,11 @@ static NSString * KCSwipeCardCellReuseID = @"KCSwipeCardCell";
 //    [tb indexPathForCell:<#(nonnull UITableViewCell *)#>]
 //    tb cellForRowAtIndexPath:<#(nonnull NSIndexPath *)#>
     
-    [self.view addSubview:self.swipeCard];
+    [self.view insertSubview:self.swipeCard atIndex:0];
     
-    self.swipeCard.frame = CGRectMake(30, 100, 300, 480);
+    self.swipeCard.frame = self.view.bounds;
     
-    self.swipeCard.offsetForItem = CGPointMake(5, 5);
+//    self.swipeCard.offsetForItem = CGPointMake(5, 5);
     
     [self.swipeCard reloadData];
     
@@ -50,7 +50,7 @@ static NSString * KCSwipeCardCellReuseID = @"KCSwipeCardCell";
 
 - (NSInteger)numberOfItemsInSwipeCard:(KCSwipeCard *)swipeCard
 {
-    return 100;
+    return 10;
 }
 
 - (KCSwipeCardCell *)swipeCard:(KCSwipeCard *)swipeCard cellForItemAtIndex:(NSInteger)index
@@ -60,8 +60,8 @@ static NSString * KCSwipeCardCellReuseID = @"KCSwipeCardCell";
     
     cell.backgroundColor = [UIColor colorWithRed:arc4random_uniform(256)/255.0 green:arc4random_uniform(256)/255.0 blue:arc4random_uniform(256)/255.0 alpha:1];
     
-    cell.layer.cornerRadius = 10;
-    cell.clipsToBounds = YES;
+//    cell.layer.cornerRadius = 10;
+//    cell.clipsToBounds = YES;
     
     return cell;
     
@@ -86,18 +86,18 @@ static NSString * KCSwipeCardCellReuseID = @"KCSwipeCardCell";
 }
 
 - (IBAction)right {
-    [self.swipeCard swipeTopItemToDirection:KCSwipeCardSwipeDirectionRight];
+    [self.swipeCard swipeItemToDirection:KCSwipeCardSwipeDirectionRight];
 }
 
 - (IBAction)left {
-    [self.swipeCard swipeTopItemToDirection:KCSwipeCardSwipeDirectionLeft];
+    [self.swipeCard swipeItemToDirection:KCSwipeCardSwipeDirectionLeft];
 }
 
 - (IBAction)reload {
     [self.swipeCard reloadData];
 }
 - (IBAction)previous {
-    [self.swipeCard swipePreviousItemFromDirection:KCSwipeCardSwipeDirectionTop];
+    [self.swipeCard swipeItemFromDirection:KCSwipeCardSwipeDirectionLeft];
 }
 
 @end

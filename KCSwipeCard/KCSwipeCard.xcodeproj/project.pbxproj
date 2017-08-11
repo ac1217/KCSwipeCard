@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		882102041F3D553F001927A8 /* KCSwipeCard.m in Sources */ = {isa = PBXBuildFile; fileRef = 882102011F3D553F001927A8 /* KCSwipeCard.m */; };
+		882102051F3D553F001927A8 /* KCSwipeCardCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 882102031F3D553F001927A8 /* KCSwipeCardCell.m */; };
 		88416CA71F394CAC004F1597 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 88416CA61F394CAC004F1597 /* main.m */; };
 		88416CAA1F394CAD004F1597 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 88416CA91F394CAD004F1597 /* AppDelegate.m */; };
 		88416CAD1F394CAD004F1597 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 88416CAC1F394CAD004F1597 /* ViewController.m */; };
@@ -15,8 +17,6 @@
 		88416CB51F394CB0004F1597 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 88416CB31F394CB0004F1597 /* LaunchScreen.storyboard */; };
 		88416CC01F394CB3004F1597 /* KCSwipeCardTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 88416CBF1F394CB3004F1597 /* KCSwipeCardTests.m */; };
 		88416CCB1F394CB4004F1597 /* KCSwipeCardUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 88416CCA1F394CB4004F1597 /* KCSwipeCardUITests.m */; };
-		88416CDB1F394D79004F1597 /* KCSwipeCard.m in Sources */ = {isa = PBXBuildFile; fileRef = 88416CDA1F394D79004F1597 /* KCSwipeCard.m */; };
-		88416CDE1F394D88004F1597 /* KCSwipeCardCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 88416CDD1F394D88004F1597 /* KCSwipeCardCell.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -37,6 +37,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		882102001F3D553F001927A8 /* KCSwipeCard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KCSwipeCard.h; sourceTree = "<group>"; };
+		882102011F3D553F001927A8 /* KCSwipeCard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KCSwipeCard.m; sourceTree = "<group>"; };
+		882102021F3D553F001927A8 /* KCSwipeCardCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KCSwipeCardCell.h; sourceTree = "<group>"; };
+		882102031F3D553F001927A8 /* KCSwipeCardCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KCSwipeCardCell.m; sourceTree = "<group>"; };
 		88416CA21F394CAB004F1597 /* KCSwipeCard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KCSwipeCard.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		88416CA61F394CAC004F1597 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		88416CA81F394CAD004F1597 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -53,10 +57,6 @@
 		88416CC61F394CB4004F1597 /* KCSwipeCardUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KCSwipeCardUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		88416CCA1F394CB4004F1597 /* KCSwipeCardUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = KCSwipeCardUITests.m; sourceTree = "<group>"; };
 		88416CCC1F394CB5004F1597 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		88416CD91F394D79004F1597 /* KCSwipeCard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KCSwipeCard.h; sourceTree = "<group>"; };
-		88416CDA1F394D79004F1597 /* KCSwipeCard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KCSwipeCard.m; sourceTree = "<group>"; };
-		88416CDC1F394D88004F1597 /* KCSwipeCardCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KCSwipeCardCell.h; sourceTree = "<group>"; };
-		88416CDD1F394D88004F1597 /* KCSwipeCardCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KCSwipeCardCell.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,6 +84,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		882101FF1F3D553F001927A8 /* KCSwipeCard */ = {
+			isa = PBXGroup;
+			children = (
+				882102001F3D553F001927A8 /* KCSwipeCard.h */,
+				882102011F3D553F001927A8 /* KCSwipeCard.m */,
+				882102021F3D553F001927A8 /* KCSwipeCardCell.h */,
+				882102031F3D553F001927A8 /* KCSwipeCardCell.m */,
+			);
+			path = KCSwipeCard;
+			sourceTree = "<group>";
+		};
 		88416C991F394CAB004F1597 = {
 			isa = PBXGroup;
 			children = (
@@ -107,7 +118,7 @@
 		88416CA41F394CAC004F1597 /* KCSwipeCard */ = {
 			isa = PBXGroup;
 			children = (
-				88416CD81F394D35004F1597 /* KCSwipeCard */,
+				882101FF1F3D553F001927A8 /* KCSwipeCard */,
 				88416CA81F394CAD004F1597 /* AppDelegate.h */,
 				88416CA91F394CAD004F1597 /* AppDelegate.m */,
 				88416CAB1F394CAD004F1597 /* ViewController.h */,
@@ -145,17 +156,6 @@
 				88416CCC1F394CB5004F1597 /* Info.plist */,
 			);
 			path = KCSwipeCardUITests;
-			sourceTree = "<group>";
-		};
-		88416CD81F394D35004F1597 /* KCSwipeCard */ = {
-			isa = PBXGroup;
-			children = (
-				88416CD91F394D79004F1597 /* KCSwipeCard.h */,
-				88416CDA1F394D79004F1597 /* KCSwipeCard.m */,
-				88416CDC1F394D88004F1597 /* KCSwipeCardCell.h */,
-				88416CDD1F394D88004F1597 /* KCSwipeCardCell.m */,
-			);
-			path = KCSwipeCard;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -292,10 +292,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				88416CDB1F394D79004F1597 /* KCSwipeCard.m in Sources */,
+				882102041F3D553F001927A8 /* KCSwipeCard.m in Sources */,
 				88416CAD1F394CAD004F1597 /* ViewController.m in Sources */,
 				88416CAA1F394CAD004F1597 /* AppDelegate.m in Sources */,
-				88416CDE1F394D88004F1597 /* KCSwipeCardCell.m in Sources */,
+				882102051F3D553F001927A8 /* KCSwipeCardCell.m in Sources */,
 				88416CA71F394CAC004F1597 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -534,6 +534,7 @@
 				88416CD11F394CB5004F1597 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		88416CD21F394CB5004F1597 /* Build configuration list for PBXNativeTarget "KCSwipeCardTests" */ = {
 			isa = XCConfigurationList;
@@ -542,6 +543,7 @@
 				88416CD41F394CB5004F1597 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		88416CD51F394CB5004F1597 /* Build configuration list for PBXNativeTarget "KCSwipeCardUITests" */ = {
 			isa = XCConfigurationList;
@@ -550,6 +552,7 @@
 				88416CD71F394CB5004F1597 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
