@@ -32,6 +32,7 @@ typedef enum : NSUInteger {
 - (CGSize)swipeCard:(KCSwipeCard *)swipeCard sizeForItemAtIndex:(NSInteger)index;
 - (CGPoint)swipeCard:(KCSwipeCard *)swipeCard offsetForItemAtIndex:(NSInteger)index;
 
+
 @end
 
 @protocol KCSwipeCardDelegate <NSObject>
@@ -95,7 +96,10 @@ typedef enum : NSUInteger {
 - (__kindof KCSwipeCardCell *)dequeueReusableCellWithIdentifier:(NSString *)identifier;
 
 - (NSInteger)indexForCell:(KCSwipeCardCell *)cell;
-- (void)swipeTopItemToDirection:(KCSwipeCardSwipeDirection)direction;
+// 滑动下一张
+- (void)swipeItemToDirection:(KCSwipeCardSwipeDirection)direction;
+// 回退上一张
+- (void)swipeItemFromDirection:(KCSwipeCardSwipeDirection)direction;
 
 - (void)reloadData;
 

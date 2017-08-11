@@ -17,7 +17,6 @@
 @property (nonatomic,strong) NSMutableDictionary *cellSourceCache;
 
 @property (nonatomic,strong) NSMutableArray *visibleCells;
-@property (nonatomic,strong) NSMutableArray *historyCells;
 
 @property (nonatomic,assign) CGPoint startPoint;
 
@@ -42,14 +41,6 @@
         _visibleCells = @[].mutableCopy;
     }
     return _visibleCells;
-}
-
-- (NSMutableArray *)historyCells
-{
-    if (!_historyCells) {
-        _historyCells = @[].mutableCopy;
-    }
-    return _historyCells;
 }
 
 - (NSMutableDictionary *)reusableCellCache
@@ -292,11 +283,16 @@
     return index + self.topItemIndex;
 }
 
-- (void)swipeTopItemToDirection:(KCSwipeCardSwipeDirection)direction
+- (void)swipeItemToDirection:(KCSwipeCardSwipeDirection)direction
 {
     [self swipeToDirection:direction cell:self.topCell];
 }
 
+- (void)swipeItemFromDirection:(KCSwipeCardSwipeDirection)direction
+{
+    
+    [self swipeFromDirection:direction cell:[self previousCell]];
+}
 
 - (void)registerClass:(Class)cellClass forCellReuseIdentifier:(NSString *)identifier
 {
@@ -342,7 +338,6 @@
     [self.visibleCells makeObjectsPerformSelector:@selector(removeFromSuperview)];
     [self.visibleCells removeAllObjects];
     [self.reusableCellCache removeAllObjects];
-    [self.historyCells removeAllObjects];
     self.nextItemIndex = 0;
     
     for (int i = 0; i < self.numberOfActiveItems; i++) {
@@ -355,6 +350,76 @@
 }
 
 #pragma mark -Private Method
+- (void)swipeFromDirection:(KCSwipeCardSwipeDirection)direction cell:(KCSwipeCardCell *)cell {
+    
+    if (!cell) {
+        return;
+    }
+    
+    NSInteger index = [self indexForCell:cell];
+    
+    if ([self.delegate respondsToSelector:@selector(swipeCard:shouldSwipeItemAtIndex:inDirection:)]) {
+        
+        if (![self.delegate swipeCard:self shouldSwipeItemAtIndex:index inDirection:direction]) {
+            
+            return;
+        }
+        
+    }
+    
+    CGFloat translationX = 0;
+    CGFloat translationY = 0;
+    switch (direction) {
+        case KCSwipeCardSwipeDirectionTop:
+            translationY = -[UIScreen mainScreen].bounds.size.height - cell.frame.size.height;
+            
+            break;
+        case KCSwipeCardSwipeDirectionBottom:
+            
+            translationY = [UIScreen mainScreen].bounds.size.height + cell.frame.size.height;
+            
+            break;
+        case KCSwipeCardSwipeDirectionLeft:
+            translationX = -([UIScreen mainScreen].bounds.size.width - cell.center.x + cell.frame.size.width * 0.5);
+            
+            break;
+        case KCSwipeCardSwipeDirectionRight:
+            
+            translationX = ([UIScreen mainScreen].bounds.size.width - cell.center.x + cell.frame.size.width * 0.5);
+            break;
+            
+        default:
+            break;
+    }
+    
+    cell.center = CGPointMake(cell.center.x + translationX, cell.center.y + translationY);
+    CGFloat angle = (cell.center.x - cell.frame.size.width / 2.0) / cell.frame.size.width / 4.0;
+    cell.transform = CGAffineTransformMakeRotation(angle);
+    
+    KCSwipeCardCell *bottomCell = self.visibleCells.lastObject;
+    
+    [UIView animateWithDuration:_animationDuration animations:^{
+        cell.center = self.cellCenter;
+        cell.transform = CGAffineTransformMakeRotation(0);
+    } completion:^(BOOL finished) {
+        [bottomCell removeFromSuperview];
+        [self reuseCell:bottomCell];
+        
+        if ([self.delegate respondsToSelector:@selector(swipeCard:didEndSwipeItemAtIndex:inDirection:)]) {
+            [self.delegate swipeCard:self didEndSwipeItemAtIndex:index inDirection:direction];
+        }
+    }];
+    
+    if ([self.delegate respondsToSelector:@selector(swipeCard:didSwipeItemAtIndex:inDirection:)]) {
+        [self.delegate swipeCard:self didSwipeItemAtIndex:index inDirection:direction];
+    }
+    
+    [self.visibleCells removeObject:bottomCell];
+    [self refreshLayoutAnimated:YES];
+    
+}
+
+
 - (void)swipeToDirection:(KCSwipeCardSwipeDirection)direction cell:(KCSwipeCardCell *)cell
 {
     if (!cell) {
@@ -408,7 +473,6 @@
     
     [UIView animateWithDuration:_animationDuration animations:^{
         
-//        cell.center = CGPointMake(self.cellCenter.x + translationX, self.cellCenter.y + translationY);
         cell.center = CGPointMake(cell.center.x + translationX, cell.center.y + translationY);
         CGFloat angle = (cell.center.x - cell.frame.size.width / 2.0) / cell.frame.size.width / 4.0;
         cell.transform = CGAffineTransformMakeRotation(angle);
@@ -416,7 +480,7 @@
     }completion:^(BOOL finished) {
         
         [cell removeFromSuperview];
-        [self historyCell:cell];
+        [self reuseCell:cell];
         
         if ([self.delegate respondsToSelector:@selector(swipeCard:didEndSwipeItemAtIndex:inDirection:)]) {
             [self.delegate swipeCard:self didEndSwipeItemAtIndex:index inDirection:direction];
@@ -454,9 +518,41 @@
     }];
 }
 
-- (void)previousCell
+- (KCSwipeCardCell *)previousCell
 {
     
+    if (!self.dataSource || ![self.dataSource respondsToSelector:@selector(swipeCard:cellForItemAtIndex:)] || self.topItemIndex == 0) {
+        
+        return nil;
+    }
+    
+    if ([self.delegate respondsToSelector:@selector(swipeCard:willLoadItemAtIndex:)]) {
+        [self.delegate swipeCard:self willLoadItemAtIndex:self.nextItemIndex];
+    }
+    
+    NSInteger index = self.topItemIndex - 1;
+    
+    KCSwipeCardCell *cell = [self.dataSource swipeCard:self cellForItemAtIndex:index];
+    CGSize size = [self sizeForItemAtIndex:index];
+    cell.frame = CGRectMake(0, 0, size.width, size.height);
+    
+    NSAssert(cell, @"cell不能为空");
+    __weak typeof(self) weakSelf = self;
+    cell.panBlock = ^(KCSwipeCardCell *cell, UIPanGestureRecognizer *pan) {
+        [weakSelf handlePan:pan cell:cell];
+    };
+    
+    [self addSubview:cell];
+    
+    [self.visibleCells insertObject:cell atIndex:0];
+    
+    if ([self.delegate respondsToSelector:@selector(swipeCard:didLoadItemAtIndex:)]) {
+        [self.delegate swipeCard:self didLoadItemAtIndex:index];
+    }
+    
+    self.nextItemIndex--;
+    
+    return cell;
 }
 
 - (void)nextCell
@@ -473,6 +569,9 @@
     NSInteger index = self.nextItemIndex;
     
     KCSwipeCardCell *cell = [self.dataSource swipeCard:self cellForItemAtIndex:index];
+    CGSize size = [self sizeForItemAtIndex:index];
+    cell.frame = CGRectMake(0, 0, size.width, size.height);
+    
     
     NSAssert(cell, @"cell不能为空");
     
@@ -500,11 +599,8 @@
         for (int i = 0; i < self.visibleCells.count; i++) {
             
             NSInteger index = self.topItemIndex + i;
-            CGSize size = [self sizeForItemAtIndex:index];
             
             KCSwipeCardCell *cell = self.visibleCells[i];
-            
-            cell.frame = CGRectMake(0, 0, size.width, size.height);
             
             if (i == 0) {
                 
@@ -525,21 +621,6 @@
     } completion:^(BOOL finished) {
         
     }];
-    
-}
-
-- (void)historyCell:(KCSwipeCardCell *)cell
-{
-    
-    [self.historyCells insertObject:cell atIndex:0];
-    
-    if (self.historyCells.count >= self.numberOfHistoryItems) {
-        
-        KCSwipeCardCell *lastCell = self.historyCells.lastObject;
-        [self.historyCells removeLastObject];
-        [self reuseCell:lastCell];
-        
-    }
     
 }
 
